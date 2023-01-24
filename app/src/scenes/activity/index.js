@@ -85,19 +85,39 @@ const Activities = ({ date, user, project }) => {
       },
     ]);
   };
-
+  const removeActivities = (activitiy) => {
+    const newArray = activities.filter((el) => el.projectName !== activitiy.projectName);
+    setActivities(newArray);
+  };
   async function onSave() {
     for (let i = 0; i < activities.length; i++) {
-      await api.post(`/activity`, activities[i]);
-      toast.success(`Saved ${activities[i].projectName}`);
+      const res = await api.post(`/activity`, activities[i]);
+      if (res.ok) {
+        toast.success(`Saved ${activities[i].projectName}`);
+        const newActivitiy = activities.map((elem) => {
+          if (elem.projectName === activities[i].projectName) {
+            return { ...elem, ...res.data };
+          }
+          return elem;
+        });
+        setActivities(newActivitiy);
+      }
     }
   }
 
-  async function onDelete(i) {
+  async function onDelete(e, i) {
+    e.stopPropagation();
     if (window.confirm("Are you sure ?")) {
       const activity = activities[i];
-      await api.remove(`/activity/${activity._id}`);
-      toast.success(`Deleted ${activity.project}`);
+      if (activity._id) {
+        const res = await api.remove(`/activity/${activity._id}`);
+        if (res.ok) {
+          toast.success(`Deleted ${activity.projectName}`);
+          removeActivities(activity);
+        }
+      } else {
+        removeActivities(activity);
+      }
     }
   }
 
@@ -195,7 +215,7 @@ const Activities = ({ date, user, project }) => {
                           })}
                           <th className={`border border-[#E5EAEF] py-[6px]`}>
                             <div className={`flex justify-center cursor-pointer text-xl hover:text-red-500`}>
-                              <MdDeleteForever onClick={() => onDelete(i)} />
+                              <MdDeleteForever onClick={(e) => onDelete(e, i)} />
                             </div>
                           </th>
                         </tr>
