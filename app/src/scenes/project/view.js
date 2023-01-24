@@ -273,8 +273,8 @@ const Links = ({ project }) => {
           </a>
         </div>
       )}
-      {project.links?.map((link) => (
-        <div className="group text-sm font-medium	text-blue-700 border-[1px] border-blue-700 rounded-full overflow-hidden">
+      {project.links?.map((link, i) => (
+        <div className="group text-sm font-medium	text-blue-700 border-[1px] border-blue-700 rounded-full overflow-hidden" key={`link-${i}`}>
           <a target="blank" href={link.url} className="break-words cursor-pointer text-blue-700 hover:text-white hover:bg-blue-700 flex hover:no-underline h-full">
             <div className="flex items-center bg-blue-700 py-1 px-2 rounded-r-full ">
               <IoIosLink className="group-hover:scale-110 text-white" />
