@@ -11,7 +11,7 @@ import api from "../../services/api";
 const ProjectList = () => {
   const [projects, setProjects] = useState(null);
   const [activeProjects, setActiveProjects] = useState(null);
-
+  const [open, setOpen] = useState(false);
   const history = useHistory();
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const ProjectList = () => {
       const { data: u } = await api.get("/project");
       setProjects(u);
     })();
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     const p = (projects || []).filter((p) => p.status === "active");
@@ -35,7 +35,7 @@ const ProjectList = () => {
 
   return (
     <div className="w-full p-2 md:!px-8">
-      <Create onChangeSearch={handleSearch} />
+      <Create onChangeSearch={handleSearch} open={open} setOpen={setOpen} />
       <div className="py-3">
         {activeProjects.map((hit) => {
           return (
@@ -92,9 +92,7 @@ const Budget = ({ project }) => {
   return <ProgressBar percentage={width} max={budget_max_monthly} value={total} />;
 };
 
-const Create = ({ onChangeSearch }) => {
-  const [open, setOpen] = useState(false);
-
+const Create = ({ onChangeSearch, open, setOpen }) => {
   return (
     <div className="mb-[10px] ">
       <div className="flex justify-between flex-wrap">
