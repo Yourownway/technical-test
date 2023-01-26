@@ -3,14 +3,34 @@ import api from "../../services/api";
 import { useSelector } from "react-redux";
 import SelectMonth from "./../../components/selectMonth";
 import SelectProject from "../../components/selectProject";
+import { getDaysInMonth } from "../activity/utils";
+import moment from "moment";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+const options = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "top",
+    },
+    title: {
+      display: true,
+      text: "Chart.js Bar Chart",
+    },
+  },
+};
 export default function Analyze() {
   const [dataStats, setDataStats] = useState(null);
   const [statFilter, setStatFilter] = useState("users");
   const [project, setProject] = useState("");
   const [timeDimension, setTimeDimension] = useState("mounth");
-
+  const [days, setDays] = useState(null);
 
   const [date, setDate] = useState(null);
+
   const options = ["users", "objective"];
   const handleStatFilter = (value) => {
     setStatFilter(value);
@@ -23,17 +43,19 @@ export default function Analyze() {
   const u = useSelector((state) => {
     return state.Auth.user;
   });
+
   useEffect(() => {
-    const search = window.location.search;
-    const params = new URLSearchParams(search);
-    const date = params.get("date");
-    if (date) setDate(new Date(date));
-  }, []);
+    if (!date) return;
+    const from = new Date(date);
+    setDays(getDaysInMonth(from.getMonth(), from.getFullYear()));
+  }, [date]);
 
   useEffect(() => {
     if (!date || !statFilter) return;
     (async () => {
-      const { data } = await api.get(`/activity/stats?date=${date.getTime()}&organisation=${u.organisation}&filter=${statFilter}&project${project._id}&project${project.name}`);
+      const { data } = await api.get(
+        `/activity/stats?date=${date.getTime()}&organisation=${u.organisation}&filter=${statFilter}&projectId=${project._id}&projectName=${project.name}`,
+      );
       setDataStats(data);
     })();
   }, [date, statFilter, project]);
@@ -56,7 +78,7 @@ export default function Analyze() {
         />
       </div>
       {!dataStats && <div>Loader</div>}
-      {dataStats && statFilter === "users" && <UserStats />}
+      {dataStats && statFilter === "users" && <UserStats days={days} dataStats={dataStats} />}
       {dataStats && statFilter === "objective" && <ObjectiveStats />}
     </div>
   );
@@ -84,8 +106,40 @@ function SelectOption({ onChange, value, options }) {
   );
 }
 
-const UserStats = () => {
-  return <></>;
+const UserStats = ({ days, dataStats }) => {
+
+  const displayDay = days.map((e) => {
+    const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
+    return `${dateMomentObject}`;
+  });
+
+  const dataStatsMap = dataStats[0].userStats.map((e) => {
+    if (!e) return;
+    if (e[0]?.value) return e[0].value;
+  });
+
+  if (!dataStats) return <></>;
+  const data = {
+    labels: displayDay,
+    datasets: [
+      {
+        label: "Dataset 1",
+        data: dataStatsMap,
+        backgroundColor: "rgba(255, 99, 132, 0.5)",
+      },
+      //   {
+      //     label: "Dataset 2",
+      //     data: labels.map(() => faker.datatype.number({ min: 0, max: 1000 })),
+      //     backgroundColor: "rgba(53, 162, 235, 0.5)",
+      //   },
+    ],
+  };
+
+  return (
+    <div>
+      <Bar options={options} data={data} />
+    </div>
+  );
 };
 
 const ObjectiveStats = () => {
