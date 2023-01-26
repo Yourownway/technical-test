@@ -120,10 +120,28 @@ const Activities = ({ date, user, project }) => {
       }
     }
   }
+  const getUserDetail = (detail, user, value) => {
+    const userValueAdded = (value - detail.value).toFixed(2) * 1;
+
+    if (!detail.userAction || detail.userAction.length === 0) {
+      detail.userAction = [{ userId: user._id, value: userValueAdded, priceSpend: (userValueAdded / 8) * (user.sellPerDay || 0) }];
+    } else {
+      const findUserIndex = detail.userAction.findIndex((e) => e.userId === user._id);
+      if (findUserIndex === -1) {
+        detail.userAction = [...detail.userAction, { userId: user._id, value: userValueAdded, priceSpend: (userValueAdded / 8) * (user.sellPerDay || 0) }];
+      } else {
+        const newValueAdded = (detail.userAction[findUserIndex].value + userValueAdded).toFixed(2) * 1;
+        detail.userAction[findUserIndex] = { userId: user._id, value: newValueAdded, priceSpend: (newValueAdded / 8) * (user.sellPerDay || 0),  };
+      }
+    }
+    return detail.userAction;
+  };
 
   function onUpdateValue(i, j, value) {
     const n = [...activities];
+    const userDetail = getUserDetail(n[i].detail[j], user, value);
     n[i].detail[j].value = value;
+    n[i].detail[j].userAction = userDetail;
     n[i].total = n[i].detail.reduce((acc, b) => acc + b.value, 0);
     n[i].cost = (n[i].total / 8) * user.costPerDay;
     n[i].value = (n[i].total / 8) * (user.sellPerDay || 0);
