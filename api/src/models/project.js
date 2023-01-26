@@ -19,6 +19,7 @@ const Schema = new mongoose.Schema({
   background: { type: String, default: "" },
   objective: { type: String },
   budget_max_monthly: { type: Number },
+  benefit_monthly: { type: Number },
   created_at: { type: Date, default: Date.now },
   last_updated_at: { type: Date, default: Date.now },
   status: { type: String },

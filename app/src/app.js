@@ -20,6 +20,7 @@ import api from "./services/api";
 
 import "./index.css";
 import Home from "./scenes/home";
+import Analyze from "./scenes/analyze";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,7 @@ const App = () => {
 
                 <RestrictedRoute path="/account" component={Account} />
                 <RestrictedRoute path="/project" component={Project} />
+                <RestrictedRoute path="/analyse" component={Analyze} />
                 <RestrictedRoute path="/" component={Home} />
               </Switch>
             </main>

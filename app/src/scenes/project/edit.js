@@ -92,6 +92,16 @@ export default function EditProject() {
                         onChange={handleChange}
                       />
                     </div>
+                    <div className="w-full md:w-[260px]">
+                      <div className="text-[14px] text-[#212325] font-medium	">Benefit expected / month</div>
+                      <input
+                        className="projectsInput text-[14px] font-normal text-[#212325] rounded-[10px]"
+                        type="number"
+                        name="benefit_monthly"
+                        value={values.benefit_monthly}
+                        onChange={handleChange}
+                      />
+                    </div>
                     <div className="w-full md:w-[260px] ">
                       <div className="text-[14px] text-[#212325] font-medium	">Payment cycle</div>
                       <select

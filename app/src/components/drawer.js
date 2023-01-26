@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ActivitiesIcon, HomeIcon, PeopleIcon, ProjectsIcon } from "../assets/Icons";
+import { ActivitiesIcon, HomeIcon, PeopleIcon, ProjectsIcon, AnalyseIcon } from "../assets/Icons";
 
 const Drawer = () => {
   return <DrawerDesktop />;
@@ -15,6 +15,7 @@ const DrawerDesktop = () => {
           <Link to="/project" title="Projects" Icon={ProjectsIcon} />
           <Link to="/activity" title="Activities" Icon={ActivitiesIcon} />
           <Link to="/user" title="People" Icon={PeopleIcon} />
+          <Link to="/analyse" title="Analyse" Icon={AnalyseIcon} />
         </Section>
 
         <div className="h-10" />

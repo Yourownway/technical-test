@@ -13,7 +13,7 @@ const Schema = new mongoose.Schema({
   total: { type: Number, default: 0 },
   cost: { type: Number, default: 0 },
   value: { type: Number, default: 0 },
-  detail: [{ date: Date, value: Number }],
+  detail: [{ date: Date, value: Number ,userAction : [{userId:String, value: Number, priceSpend: Number }]}],
   created_at: { type: Date, default: Date.now },
   comment: { type: String },
   organisation: { type: String, trim: true, unique: true },
