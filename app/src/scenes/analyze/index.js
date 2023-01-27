@@ -10,18 +10,6 @@ import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      position: "top",
-    },
-    title: {
-      display: true,
-      text: "Chart.js Bar Chart",
-    },
-  },
-};
 export default function Analyze() {
   const [dataStats, setDataStats] = useState(null);
   const [statFilter, setStatFilter] = useState("users");
@@ -107,6 +95,28 @@ function SelectOption({ onChange, value, options }) {
 }
 
 const UserStats = ({ days, dataStats }) => {
+  const [users, setUsers] = useState(null);
+  console.log("🚀 ~ file: index.js:100 ~ UserStats ~ users", users);
+  const [userDimension, setUserDimension] = useState("All user");
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: "Users",
+      },
+    },
+  };
+  useEffect(() => {
+    (async () => {
+      const { data } = await api.get("/user");
+      setUsers(data);
+    })();
+  }, []);
 
   const displayDay = days.map((e) => {
     const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
@@ -137,6 +147,15 @@ const UserStats = ({ days, dataStats }) => {
 
   return (
     <div>
+      {users && (
+        <SelectOption
+          onChange={(e) => {
+            setUserDimension(e);
+          }}
+          options={users.map((e) => e.name)}
+          value={userDimension}
+        />
+      )}
       <Bar options={options} data={data} />
     </div>
   );
