@@ -56,7 +56,6 @@ export default function Analyze() {
         <SelectProject
           value={project.name}
           onChange={(e) => {
-            console.log("🚀 ~ file: index.js:74 ~ Analyze ~ e", e)
             if (e) {
               setProject({ name: e.name, id: e._id });
             } else {
@@ -72,7 +71,6 @@ export default function Analyze() {
     </div>
   );
 }
-        
 
 function SelectOption({ onChange, value, options }) {
   return (
@@ -98,9 +96,9 @@ function SelectOption({ onChange, value, options }) {
 
 const UserStats = ({ days, dataStats }) => {
   const [users, setUsers] = useState(null);
-  console.log("🚀 ~ file: index.js:100 ~ UserStats ~ users", users);
   const [userDimension, setUserDimension] = useState("All user");
-
+  const [dataUserSet, setDataUserSet] = useState([]);
+  console.log("🚀 ~ file: index.js:100 ~ UserStats ~ users", dataUserSet);
   const options = {
     responsive: true,
     plugins: {
@@ -113,12 +111,33 @@ const UserStats = ({ days, dataStats }) => {
       },
     },
   };
+
+  let initialValue = [];
   useEffect(() => {
     (async () => {
       const { data } = await api.get("/user");
       setUsers(data);
+      data.forEach((e) => {
+        if (e) {
+          return initialValue.push([]);
+        }
+      });
+      const formatUserData = dataStats[0].userStats.reduce((total, current, index) => {
+        for (let i = 0; i < initialValue.length; i++) {
+          if (current[i]) [(total[i][index] = current[i])];
+          else {
+            total[i][index] = [];
+          }
+        }
+        return total;
+      }, initialValue);
+      setDataUserSet(formatUserData);
     })();
   }, []);
+
+  useEffect(() => {
+    if (initialValue.length === 0) return;
+  }, [initialValue]);
 
   const displayDay = days.map((e) => {
     const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
@@ -127,8 +146,14 @@ const UserStats = ({ days, dataStats }) => {
 
   const dataStatsMap = dataStats[0].userStats.map((e) => {
     if (!e) return;
-    if (e[0]?.value) return e[0].value;
+    if (e[0]?.priceSpend) return e[0].priceSpend;
   });
+
+//   let dataset = []
+// useEffect(() => {
+//     if(dataUserSet.length === 0 ) return
+//     const datasets = dataUserSet.map((e,i)=>{return{label:users[i].name,data: e[i].priceSpend }})
+// }, [dataUserSet])
 
 
 
@@ -137,7 +162,7 @@ const UserStats = ({ days, dataStats }) => {
     labels: displayDay,
     datasets: [
       {
-        label: "Dataset 1",
+        label: "User 1 priceSpend / day",
         data: dataStatsMap,
         backgroundColor: "rgba(255, 99, 132, 0.5)",
       },
