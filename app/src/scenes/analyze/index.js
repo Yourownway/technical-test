@@ -56,10 +56,11 @@ export default function Analyze() {
         <SelectProject
           value={project.name}
           onChange={(e) => {
-            if (e._id) {
+            console.log("🚀 ~ file: index.js:74 ~ Analyze ~ e", e)
+            if (e) {
               setProject({ name: e.name, id: e._id });
             } else {
-              setProject({ name: e.name, id: "none" });
+              setProject({ name: "allProject", id: null });
             }
           }}
           className="w-[180px] bg-[#FFFFFF] text-[#212325] py-[10px] px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm font-normal text-[14px]"
@@ -71,6 +72,7 @@ export default function Analyze() {
     </div>
   );
 }
+        
 
 function SelectOption({ onChange, value, options }) {
   return (
@@ -127,6 +129,8 @@ const UserStats = ({ days, dataStats }) => {
     if (!e) return;
     if (e[0]?.value) return e[0].value;
   });
+
+
 
   if (!dataStats) return <></>;
   const data = {
