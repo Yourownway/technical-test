@@ -19,34 +19,31 @@ const Schema = new mongoose.Schema({
   organisation: { type: String, trim: true, unique: true },
 });
 
-Schema.post('aggregate', function(doc){
-    if (doc.length > 1){
-        const avgOnAllProjects = doc.reduce((total, current, index)=>{
-       
-         return total = current.formatStats.reduce((total2, current2, index2)=>{
-         for(let i =0; i< doc.length; i++){
-             
-            if(current2)
-           { 
-            if(typeof(total[index2]) !== "object"){
-                total[index2] = {value: current2.value,priceSpend: current2.priceSpend, userId: current2.userId }
-            }else{
-                total[index2].value += doc[i].formatStats[index2].value
-                total[index2].priceSpend += doc[i].formatStats[index2].priceSpend
+Schema.post("aggregate", function (doc) {
+  if (doc.length > 1) {
+    const avgOnAllProjects = doc.reduce((total, current, index) => {
+      return (total = current.formatStats.reduce(
+        (total2, current2, index2) => {
+          for (let i = 0; i < doc.length; i++) {
+            if (current2) {
+              if (typeof total[index2] !== "object") {
+                total[index2] = { value: current2.value, priceSpend: current2.priceSpend, userId: current2.userId };
+              } else {
+                total[index2].value += doc[i].formatStats[index2].value;
+                total[index2].priceSpend += doc[i].formatStats[index2].priceSpend;
+              }
             }
-           }
-           
-           return total
-         }
-
-        },[{}]) 
-
-        },[])
-        doc.splice(1,doc.length-1)
-        doc[0].formatStats = avgOnAllProjects
-    }
-    return doc 
-})
+            return total;
+          }
+        },
+        [{}]
+      ));
+    }, []);
+    doc.splice(1, doc.length - 1);
+    doc[0].formatStats = avgOnAllProjects;
+  }
+  return doc;
+});
 
 const OBJ = mongoose.model(MODELNAME, Schema);
 module.exports = OBJ;
