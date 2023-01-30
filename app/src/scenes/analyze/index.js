@@ -67,7 +67,7 @@ export default function Analyze() {
         />
       </div>
       {!dataStats && <div>Loader</div>}
-      {project && project._id && <Projthis mectStats project={project} />}
+      {project && project._id && <ProjectStats project={project} />}
       {dataStats && statFilter === "users" && (
         <UserStats days={days} dataStats={dataStats} userDimension={userDimension} setUserDimension={setUserDimension} projectId={project._id} />
       )}
