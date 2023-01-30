@@ -11,12 +11,14 @@ import { Bar } from "react-chartjs-2";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function Analyze() {
-  const [dataStats, setDataStats] = useState(null);
-
   const [statFilter, setStatFilter] = useState("users");
+  const [dataStats, setDataStats] = useState(null);
+  const [dataProjects, setDataProjects] = useState(null);
+  console.log("🚀 ~ file: index.js:17 ~ Analyze ~ dataProjects", dataProjects);
+
   const [userDimension, setUserDimension] = useState(null);
 
-  const [project, setProject] = useState("");
+  const [project, setProject] = useState({ name: "allProject", id: undefined });
   const [days, setDays] = useState(null);
 
   const [date, setDate] = useState(null);
@@ -25,7 +27,6 @@ export default function Analyze() {
   const handleStatFilter = (value) => {
     setStatFilter(value);
   };
- 
 
   const u = useSelector((state) => {
     return state.Auth.user;
@@ -53,7 +54,6 @@ export default function Analyze() {
       <div className="flex flex-wrap gap-5 p-2 md:!px-8">
         <SelectOption onChange={handleStatFilter} value={statFilter} options={options} />
         <SelectMonth start={-3} indexDefaultValue={3} value={date} onChange={(e) => setDate(new Date(e.target.value))} showArrows />
-        {/* <SelectOption onChange={handleTimeDimension} value={timeDimension} options={timeDimOptions} /> */}
         <SelectProject
           value={project.name}
           onChange={(e) => {
@@ -63,11 +63,12 @@ export default function Analyze() {
               setProject({ name: "allProject", id: undefined });
             }
           }}
+          handleProjects={(projects) => setDataProjects(projects)}
           className="w-[180px] bg-[#FFFFFF] text-[#212325] py-[10px] px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm font-normal text-[14px]"
         />
       </div>
       {!dataStats && <div>Loader</div>}
-      {project && project._id && <ProjectStats project={project} />}
+      <ProjectStats project={project} projects={dataProjects} />
       {dataStats && statFilter === "users" && (
         <UserStats days={days} dataStats={dataStats} userDimension={userDimension} setUserDimension={setUserDimension} projectId={project._id} />
       )}
@@ -119,13 +120,35 @@ function SelectOption({ onChange, value, options, name = "project" }) {
   );
 }
 
-const ProjectStats = ({ project }) => {
-  if (!project) return <></>;
+const ProjectStats = ({ project, projects }) => {
+  if (!projects) return <></>;
+  const totalProjects = projects.reduce((total, current) => {
+    if (!total?.budget_max_monthly) {
+      total.budget_max_monthly = current?.budget_max_monthly || 0;
+      total.benefit_monthly = current?.benefit_monthly || 0;
+    } else {
+      total.budget_max_monthly += current?.budget_max_monthly || 0;
+      total.benefit_monthly += current?.benefit_monthly || 0;
+    }
+    return total;
+  }, {});
+
   return (
-    <>
-      <div>Budget max monthly: {project.budget_max_monthly}</div>
-      <div>benefit_monthly: {project.benefit_monthly}</div>
-    </>
+    <div className="relative flex items-start justify-center pt-6 pb-2 gap-5">
+      {project._id ? (
+        <>
+          <div>Name: {project.name}</div>
+          <div>Budget max monthly: {project.budget_max_monthly}</div>
+          <div>Benefit_monthly: {project.benefit_monthly}</div>
+        </>
+      ) : (
+        <>
+          <div>Name: All projects</div>
+          <div>Budget max monthly: {totalProjects.budget_max_monthly}</div>
+          <div>Benefit_monthly: {totalProjects.benefit_monthly}</div>
+        </>
+      )}
+    </div>
   );
 };
 
@@ -169,7 +192,6 @@ const UserStats = ({ days, dataStats, userDimension, setUserDimension, projectId
   }, [initialValue]);
 
   useEffect(() => {
-//  if (!days || !userDimension || !dataStats[0]?.userStats) return setConfig(null);
     const displayDay = days.map((e) => {
       const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
       return `${dateMomentObject}`;
@@ -204,22 +226,22 @@ const UserStats = ({ days, dataStats, userDimension, setUserDimension, projectId
   return (
     <div>
       {users && (
-        <SelectOption
-          onChange={(e) => {
-            setUserDimension(e);
-          }}
-          options={users}
-          value={userDimension}
-        />
+        <div className="flex flex-wrap gap-5 p-2 md:!px-8">
+          <SelectOption
+            onChange={(e) => {
+              setUserDimension(e);
+            }}
+            options={users}
+            value={userDimension}
+          />
+        </div>
       )}
       <div className="relative flex items-start justify-center pt-6 pb-2 gap-5">
-      <div>days_worked : {userDimension.days_worked}</div>
-      <div>Sell Per Day : {userDimension.sellPerDay}</div>
-      <div>cost Per Day : {userDimension.costPerDay}</div>
+        <div>Days_worked : {userDimension.days_worked}</div>
+        <div>Sell Per Day : {userDimension.sellPerDay}</div>
+        <div>Cost Per Day : {userDimension.costPerDay}</div>
       </div>
-      <div>
-      {config ? <Bar options={options} data={config} /> : <div>no data found</div>}
-      </div>
+      <div className="flex w-3/5 flex-wrap gap-5 p-2 md:!px-8">{config ? <Bar options={options} data={config} /> : <div>no data found</div>}</div>
     </div>
   );
 };
