@@ -12,9 +12,11 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export default function Analyze() {
   const [dataStats, setDataStats] = useState(null);
+
   const [statFilter, setStatFilter] = useState("users");
+  const [userDimension, setUserDimension] = useState(null);
+
   const [project, setProject] = useState("");
-  const [timeDimension, setTimeDimension] = useState("mounth");
   const [days, setDays] = useState(null);
 
   const [date, setDate] = useState(null);
@@ -23,10 +25,7 @@ export default function Analyze() {
   const handleStatFilter = (value) => {
     setStatFilter(value);
   };
-  const timeDimOptions = ["week", "mounth", "years"];
-  const handleTimeDimension = (e) => {
-    setTimeDimension(e);
-  };
+ 
 
   const u = useSelector((state) => {
     return state.Auth.user;
@@ -39,66 +38,157 @@ export default function Analyze() {
   }, [date]);
 
   useEffect(() => {
-    if (!date || !statFilter) return;
+    if (!date || !statFilter || !u) return;
     (async () => {
       const { data } = await api.get(
-        `/activity/stats?date=${date.getTime()}&organisation=${u.organisation}&filter=${statFilter}&projectId=${project._id}&projectName=${project.name}`,
+        `/analyze/?date=${date.getTime()}&organisation=${u.organisation}&filter=${statFilter}&userId=${userDimension ? userDimension._id : u._id}&projectId=${
+          project._id && project._id
+        }&projectName=${project.name}`,
       );
       setDataStats(data);
     })();
-  }, [date, statFilter, project]);
+  }, [date, statFilter, project, userDimension]);
   return (
     <div className="w-screen md:w-full">
       <div className="flex flex-wrap gap-5 p-2 md:!px-8">
         <SelectOption onChange={handleStatFilter} value={statFilter} options={options} />
         <SelectMonth start={-3} indexDefaultValue={3} value={date} onChange={(e) => setDate(new Date(e.target.value))} showArrows />
-        <SelectOption onChange={handleTimeDimension} value={timeDimension} options={timeDimOptions} />
+        {/* <SelectOption onChange={handleTimeDimension} value={timeDimension} options={timeDimOptions} /> */}
         <SelectProject
           value={project.name}
           onChange={(e) => {
             if (e) {
-              setProject({ name: e.name, id: e._id });
+              setProject(e);
             } else {
-              setProject({ name: "allProject", id: null });
+              setProject({ name: "allProject", id: undefined });
             }
           }}
           className="w-[180px] bg-[#FFFFFF] text-[#212325] py-[10px] px-[14px] rounded-[10px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm font-normal text-[14px]"
         />
       </div>
       {!dataStats && <div>Loader</div>}
-      {dataStats && statFilter === "users" && <UserStats days={days} dataStats={dataStats} />}
+      {project && project._id && <Projthis mectStats project={project} />}
+      {dataStats && statFilter === "users" && (
+        <UserStats days={days} dataStats={dataStats} userDimension={userDimension} setUserDimension={setUserDimension} projectId={project._id} />
+      )}
       {dataStats && statFilter === "objective" && <ObjectiveStats />}
     </div>
   );
 }
 
-function SelectOption({ onChange, value, options }) {
+function SelectOption({ onChange, value, options, name = "project" }) {
+  const type = typeof value;
   return (
-    <select
-      className="w-[180px] bg-[#FFFFFF] text-[12px] text-[#212325] font-semibold py-[4px] px-[4px] rounded-[5px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm"
-      name="project"
-      value={value || ""}
-      onChange={(e) => {
-        e.preventDefault();
+    <>
+      {type === "object" ? (
+        <select
+          className="w-[180px] bg-[#FFFFFF] text-[12px] text-[#212325] font-semibold py-[4px] px-[4px] rounded-[5px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm"
+          name={name}
+          onChange={(e) => {
+            e.preventDefault();
+            onChange(JSON.parse(e.target.value));
+          }}>
+          {options.map((e, i) => {
+            return (
+              <option key={`option-${i + 1}`} value={JSON.stringify(e)}>
+                {e.name}
+              </option>
+            );
+          })}
+        </select>
+      ) : (
+        <select
+          className="w-[180px] bg-[#FFFFFF] text-[12px] text-[#212325] font-semibold py-[4px] px-[4px] rounded-[5px] border-r-[16px] border-[transparent] cursor-pointer shadow-sm"
+          name={name}
+          value={value}
+          onChange={(e) => {
+            e.preventDefault();
 
-        onChange(e.target.value);
-      }}>
-      {options.map((e, i) => {
-        return (
-          <option key={`option-${i + 1}`} value={e}>
-            {e}
-          </option>
-        );
-      })}
-    </select>
+            onChange(e.target.value);
+          }}>
+          {options.map((e, i) => {
+            return (
+              <option key={`option-${i + 1}`} value={e}>
+                {e}
+              </option>
+            );
+          })}
+        </select>
+      )}
+    </>
   );
 }
 
-const UserStats = ({ days, dataStats }) => {
+const ProjectStats = ({ project }) => {
+  if (!project) return <></>;
+  return (
+    <>
+      <div>Budget max monthly: {project.budget_max_monthly}</div>
+      <div>benefit_monthly: {project.benefit_monthly}</div>
+    </>
+  );
+};
+
+const UserStats = ({ days, dataStats, userDimension, setUserDimension, projectId }) => {
   const [users, setUsers] = useState(null);
-  const [userDimension, setUserDimension] = useState("All user");
-  const [dataUserSet, setDataUserSet] = useState([]);
-  console.log("🚀 ~ file: index.js:100 ~ UserStats ~ users", dataUserSet);
+  const [config, setConfig] = useState(null);
+
+  let initialValue = [];
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await api.get("/user");
+      if (data) {
+        const array = data.map((e) => {
+          const { _id, name, sellPerDay, costPerDay, days_worked } = e;
+          return { _id, name, sellPerDay, costPerDay, days_worked };
+        });
+        setUsers(array);
+        setUserDimension(array[0]);
+      }
+      //   data.forEach((e) => {
+      //     if (e) {
+      //       return initialValue.push([]);
+      //     }
+      //   }
+      //   );
+      // const formatUserData = dataStats[0].userStats.reduce((total, current, index) => {
+      //   for (let i = 0; i < initialValue.length; i++) {
+      //     if (current[i]) [(total[i][index] = current[i])];
+      //     else {
+      //       total[i][index] = [];
+      //     }
+      //   }
+      //   return total;
+      // }, initialValue);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (initialValue.length === 0) return;
+  }, [initialValue]);
+
+  useEffect(() => {
+//  if (!days || !userDimension || !dataStats[0]?.userStats) return setConfig(null);
+    const displayDay = days.map((e) => {
+      const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
+      return `${dateMomentObject}`;
+    });
+
+    const dataSetPrice = dataStats[0]?.formatStats?.map((e) => (e?.priceSpend ? e.priceSpend : 0)) || [];
+    const dataSetValue = dataStats[0]?.formatStats?.map((e) => (e?.value ? e.value : 0)) || [];
+
+    const cfg = {
+      labels: displayDay,
+      datasets: [
+        { label: `price spend per day`, data: dataSetPrice || [], backgroundColor: "rgba(255,0, 0, 0.6)", borderWidth: 1 },
+        { label: `value`, data: dataSetValue || [], backgroundColor: "rgba(0, 0, 255, 0.6)", borderWidth: 1 },
+      ],
+    };
+    setConfig(cfg);
+  }, [userDimension, projectId, dataStats]);
+
+  if (!userDimension) return <></>;
   const options = {
     responsive: true,
     plugins: {
@@ -107,73 +197,10 @@ const UserStats = ({ days, dataStats }) => {
       },
       title: {
         display: true,
-        text: "Users",
+        text: `Users: ${userDimension.name}`,
       },
     },
   };
-
-  let initialValue = [];
-  useEffect(() => {
-    (async () => {
-      const { data } = await api.get("/user");
-      setUsers(data);
-      data.forEach((e) => {
-        if (e) {
-          return initialValue.push([]);
-        }
-      });
-      const formatUserData = dataStats[0].userStats.reduce((total, current, index) => {
-        for (let i = 0; i < initialValue.length; i++) {
-          if (current[i]) [(total[i][index] = current[i])];
-          else {
-            total[i][index] = [];
-          }
-        }
-        return total;
-      }, initialValue);
-      setDataUserSet(formatUserData);
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (initialValue.length === 0) return;
-  }, [initialValue]);
-
-  const displayDay = days.map((e) => {
-    const dateMomentObject = moment(e).format("dd, DD-MM-YYYY");
-    return `${dateMomentObject}`;
-  });
-
-  const dataStatsMap = dataStats[0].userStats.map((e) => {
-    if (!e) return;
-    if (e[0]?.priceSpend) return e[0].priceSpend;
-  });
-
-//   let dataset = []
-// useEffect(() => {
-//     if(dataUserSet.length === 0 ) return
-//     const datasets = dataUserSet.map((e,i)=>{return{label:users[i].name,data: e[i].priceSpend }})
-// }, [dataUserSet])
-
-
-
-  if (!dataStats) return <></>;
-  const data = {
-    labels: displayDay,
-    datasets: [
-      {
-        label: "User 1 priceSpend / day",
-        data: dataStatsMap,
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
-      },
-      //   {
-      //     label: "Dataset 2",
-      //     data: labels.map(() => faker.datatype.number({ min: 0, max: 1000 })),
-      //     backgroundColor: "rgba(53, 162, 235, 0.5)",
-      //   },
-    ],
-  };
-
   return (
     <div>
       {users && (
@@ -181,11 +208,18 @@ const UserStats = ({ days, dataStats }) => {
           onChange={(e) => {
             setUserDimension(e);
           }}
-          options={users.map((e) => e.name)}
+          options={users}
           value={userDimension}
         />
       )}
-      <Bar options={options} data={data} />
+      <div className="relative flex items-start justify-center pt-6 pb-2 gap-5">
+      <div>days_worked : {userDimension.days_worked}</div>
+      <div>Sell Per Day : {userDimension.sellPerDay}</div>
+      <div>cost Per Day : {userDimension.costPerDay}</div>
+      </div>
+      <div>
+      {config ? <Bar options={options} data={config} /> : <div>no data found</div>}
+      </div>
     </div>
   );
 };
