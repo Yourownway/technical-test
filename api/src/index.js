@@ -6,6 +6,11 @@ const cookieParser = require("cookie-parser");
 
 require("./mongo");
 
+process.on('uncaughtException', err => {
+    console.log('UNCAUGHT EXCEPTION! 💥 Shutting down... npm install ?');
+    console.log(err.name, err.message);
+    process.exit(1);
+  });
 const { PORT, APP_URL } = require("./config.js");
 
 const app = express();
@@ -32,3 +37,11 @@ app.get("/", async (req, res) => {
 require("./passport")(app);
 
 app.listen(PORT, () => console.log("Listening on port " + PORT));
+
+process.on('unhandledRejection', err => {
+    console.log('UNHANDLED REJECTION! 💥 Shutting down... npm install ?');
+    console.log(err.name, err.message);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
