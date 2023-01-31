@@ -6,7 +6,7 @@ const UserObject = require("../models/user");
 const AuthObject = require("../auth");
 
 const { validatePassword } = require("../utils");
-
+const track = require("../utils/tracking")
 const UserAuth = new AuthObject(UserObject);
 
 const SERVER_ERROR = "SERVER_ERROR";
@@ -19,7 +19,7 @@ router.post("/signup", (req, res) => UserAuth.signup(req, res));
 
 router.get("/signin_token", passport.authenticate("user", { session: false }), (req, res) => UserAuth.signinToken(req, res));
 
-router.get("/available", passport.authenticate("user", { session: false }), async (req, res) => {
+router.get("/available", track, passport.authenticate("user", { session: false }), async (req, res) => {
   try {
     const users = await UserObject.find({ availability: { $ne: "not available" }, organisation: req.user.organisation }).sort("-last_login_at");
 
