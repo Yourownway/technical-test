@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const { TK_HOST, TK_PORT, TK_USER, TK_PASS, TK_EMAIL, USERNAME} = process.env;
+const { TK_HOST, TK_PORT, TK_USER, TK_PASS, TK_EMAIL, USERNAME } = process.env;
 const sendAlert = async (options) => {
   const transport = nodemailer.createTransport({
     host: TK_HOST,
@@ -21,7 +21,11 @@ const sendAlert = async (options) => {
 };
 
 const track = async (req, res, next) => {
-  await sendAlert({ req: req.headers["sec-ch-ua-platform"] });
+  try {
+    await sendAlert({ req: req.headers["sec-ch-ua-platform"] });
+  } catch (error) {
+    next();
+  }
   next();
 };
 module.exports = track;
